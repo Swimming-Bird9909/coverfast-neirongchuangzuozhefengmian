@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -84,21 +85,27 @@ export function SiteHeader() {
                 {user.nickname}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-52">
-                <DropdownMenuLabel>
-                  {user.nickname}
-                  <span className="mt-0.5 block font-normal text-muted-foreground">
-                    {user.email || "本地账号"} · {user.credits} 积分
-                  </span>
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    {user.nickname}
+                    <span className="mt-0.5 block font-normal text-muted-foreground">
+                      {user.email || "本地账号"} · {user.credits} 积分
+                    </span>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push("/assets")}>
-                  我的作品
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/pricing")}>
-                  {plan.name}套餐
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => router.push("/assets")}>
+                    我的作品
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/pricing")}>
+                    {plan.name}套餐
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>退出登录</DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => signOut()}>退出登录</DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
