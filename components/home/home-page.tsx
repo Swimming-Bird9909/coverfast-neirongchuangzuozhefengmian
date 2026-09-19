@@ -109,12 +109,13 @@ export function HomePage() {
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <Button
+              nativeButton={false}
               className="h-11 bg-amber-300 px-5 text-zinc-950 hover:bg-amber-200"
               render={<Link href="#generate" />}
             >
               免费开始
             </Button>
-            <Button variant="outline" className="h-11" render={<Link href="/explore" />}>
+            <Button variant="outline" className="h-11" nativeButton={false} render={<Link href="/explore" />}>
               逛灵感广场
             </Button>
           </div>
@@ -210,6 +211,7 @@ export function HomePage() {
             加入正在用闪封面赶更新的创作者。几秒钟出图，而不是在画布上耗掉一个下午。
           </p>
           <Button
+            nativeButton={false}
             className="mt-8 h-12 bg-amber-300 px-8 text-base text-zinc-950 hover:bg-amber-200"
             render={<Link href="/generate" />}
           >

@@ -24,7 +24,7 @@ export function InspirationWall({
           <p className="mt-2 max-w-2xl text-muted-foreground">{sub}</p>
         </div>
         {limit ? (
-          <Button variant="outline" render={<Link href="/explore" />}>
+          <Button variant="outline" nativeButton={false} render={<Link href="/explore" />}>
             查看全部
           </Button>
         ) : null}
@@ -44,6 +44,7 @@ export function InspirationWall({
               <Button
                 size="sm"
                 className="shrink-0 bg-amber-300 text-zinc-950 hover:bg-amber-200"
+                nativeButton={false}
                 render={
                   <Link
                     href={`/generate?style=${item.styleId}&platform=${item.platformId}&topic=${encodeURIComponent(item.topic)}`}

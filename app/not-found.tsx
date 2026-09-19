@@ -10,10 +10,14 @@ export default function NotFound() {
         链接可能写错了。回到首页继续生成，或去灵感广场找一张同款。
       </p>
       <div className="mt-6 flex justify-center gap-3">
-        <Button className="bg-amber-300 text-zinc-950 hover:bg-amber-200" render={<Link href="/" />}>
+        <Button
+          nativeButton={false}
+          className="bg-amber-300 text-zinc-950 hover:bg-amber-200"
+          render={<Link href="/" />}
+        >
           回首页
         </Button>
-        <Button variant="outline" render={<Link href="/explore" />}>
+        <Button variant="outline" nativeButton={false} render={<Link href="/explore" />}>
           灵感广场
         </Button>
       </div>

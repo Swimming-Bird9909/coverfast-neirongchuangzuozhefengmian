@@ -52,7 +52,7 @@ export default function AssetsPage() {
             作品保存在这台浏览器。生成后可随时回来改字、换风格、继续下载。
           </p>
         </div>
-        <Button className="bg-amber-300 text-zinc-950 hover:bg-amber-200" render={<Link href="/generate" />}>
+        <Button nativeButton={false} className="bg-amber-300 text-zinc-950 hover:bg-amber-200" render={<Link href="/generate" />}>
           新建封面
         </Button>
       </div>
@@ -69,7 +69,7 @@ export default function AssetsPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             去首页或生成器输入一个选题，第一张封面会保存在这里。
           </p>
-          <Button className="mt-6" render={<Link href="/generate" />}>
+          <Button className="mt-6" nativeButton={false} render={<Link href="/generate" />}>
             去生成
           </Button>
         </div>
@@ -96,6 +96,7 @@ export default function AssetsPage() {
                   <Button
                     size="sm"
                     variant="outline"
+                    nativeButton={false}
                     render={<Link href={`/generate?id=${asset.id}`} />}
                   >
                     继续编辑

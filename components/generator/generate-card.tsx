@@ -128,7 +128,9 @@ export function GenerateCard({
 
       <Tabs
         value={mode}
-        onValueChange={(v) => setMode(v as GenerateMode)}
+        onValueChange={(v) => {
+          if (v === "text" || v === "image") setMode(v);
+        }}
       >
         <TabsList className="mb-4">
           <TabsTrigger value="text">

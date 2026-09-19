@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MockPaymentPort } from "@/lib/billing/mock-payment";
 import { PLANS, planPrice } from "@/lib/billing/plans";
-import { useAppStore } from "@/lib/store";
+import { signIn, useAppStore } from "@/lib/store";
 import type { BillingCycle, PlanId } from "@/lib/types";
 import { Loader2Icon } from "lucide-react";
 import Link from "next/link";
@@ -38,6 +38,7 @@ function CheckoutInner() {
         cycle,
       });
       await MockPaymentPort.confirm(session.id);
+      signIn(name);
       toast.success(`已开通${plan.name}，积分已到账`);
       router.push("/assets");
     } catch (error) {
@@ -98,7 +99,7 @@ function CheckoutInner() {
               <li key={f}>{f}</li>
             ))}
           </ul>
-          <Button variant="ghost" className="px-0" render={<Link href="/pricing" />}>
+          <Button variant="ghost" className="px-0" nativeButton={false} render={<Link href="/pricing" />}>
             返回改套餐
           </Button>
         </CardContent>
