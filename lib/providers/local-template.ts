@@ -28,6 +28,7 @@ export const LocalTemplateProvider: CoverProvider = {
       badge: copy.badge,
       titles: copy.titles,
       selectedTitleIndex: 0,
+      titleScale: 1,
       createdAt: new Date().toISOString(),
       status: "ready",
       brandColor: input.brandColor,

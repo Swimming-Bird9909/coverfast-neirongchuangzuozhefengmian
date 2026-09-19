@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandColorPicker } from "@/components/generator/brand-colors";
 import { CoverCanvas } from "@/components/generator/cover-canvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,6 @@ import {
   canUseStyle,
   needsWatermark,
   refundDownload,
-  setBrandColor,
   updateAsset,
   useAppStore,
 } from "@/lib/store";
@@ -91,10 +91,12 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
           watermark={watermark}
           brandColor={brandColor}
           className="mx-auto w-full max-w-lg"
+          editable
+          onChange={patch}
         />
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          安全区已预留边距 · 当前 {PLATFORM_LIST.find((p) => p.id === asset.platformId)?.width}
-          ×
+          点封面即可改标题、副标题和角标 · 右下角调字号 · 当前{" "}
+          {PLATFORM_LIST.find((p) => p.id === asset.platformId)?.width}×
           {PLATFORM_LIST.find((p) => p.id === asset.platformId)?.height}
           {watermark ? " · 免费导出带水印" : " · 会员无水印"}
         </p>
@@ -123,25 +125,23 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
           />
         </div>
 
-        {plan.brandColors ? (
-          <div className="space-y-1.5">
-            <Label>品牌色套装</Label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={user.brandColor}
-                onChange={(e) => {
-                  setBrandColor(e.target.value);
-                  patch({ brandColor: e.target.value });
-                }}
-                className="size-9 cursor-pointer rounded-lg border border-white/15 bg-transparent"
-              />
-              <span className="text-xs text-muted-foreground">
-                专业会员可将角标与装饰条换成品牌色
-              </span>
-            </div>
-          </div>
-        ) : null}
+        <div className="space-y-1.5">
+          <Label>专业版品牌色</Label>
+          <BrandColorPicker onPick={(color) => patch({ brandColor: color })} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>标题字号 {Math.round((asset.titleScale ?? 1) * 100)}%</Label>
+          <input
+            type="range"
+            min={0.75}
+            max={1.35}
+            step={0.05}
+            value={asset.titleScale ?? 1}
+            onChange={(e) => patch({ titleScale: Number(e.target.value) })}
+            className="w-full accent-amber-300"
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">

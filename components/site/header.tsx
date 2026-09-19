@@ -2,14 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -18,12 +17,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { PLANS } from "@/lib/billing/plans";
-import { signIn, signOut, useAppStore } from "@/lib/store";
+import { signOut, useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { MenuIcon, SparklesIcon, ZapIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/generate", label: "生成器" },
@@ -35,10 +33,10 @@ const NAV = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAppStore();
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [nickname, setNickname] = useState(user.nickname);
   const plan = PLANS[user.plan];
+  const loginHref = `/login?next=${encodeURIComponent(pathname || "/")}`;
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/8 bg-[#07080d]/80 backdrop-blur-xl">
@@ -79,19 +77,36 @@ export function SiteHeader() {
             {plan.name} · {user.credits} 积分
           </Link>
           {user.signedIn ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:inline-flex"
-              onClick={() => signOut()}
-            >
-              {user.nickname}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="hidden h-8 max-w-40 items-center truncate rounded-lg border border-white/12 px-2.5 text-sm sm:inline-flex"
+              >
+                {user.nickname}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-52">
+                <DropdownMenuLabel>
+                  {user.nickname}
+                  <span className="mt-0.5 block font-normal text-muted-foreground">
+                    {user.email || "本地账号"} · {user.credits} 积分
+                  </span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/assets")}>
+                  我的作品
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/pricing")}>
+                  {plan.name}套餐
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>退出登录</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button
               size="sm"
-              className="hidden sm:inline-flex bg-amber-300 text-zinc-950 hover:bg-amber-200"
-              onClick={() => setLoginOpen(true)}
+              className="hidden bg-amber-300 text-zinc-950 hover:bg-amber-200 sm:inline-flex"
+              nativeButton={false}
+              render={<Link href={loginHref} />}
             >
               登录
             </Button>
@@ -119,16 +134,23 @@ export function SiteHeader() {
                     {item.label}
                   </Link>
                 ))}
+                <Link href="/changelog" className="rounded-lg px-3 py-2 text-sm hover:bg-white/5">
+                  更新日志
+                </Link>
                 <p className="mt-3 px-3 text-xs text-muted-foreground">
-                  {plan.name} · 余额 {user.credits} 积分
+                  {user.signedIn ? user.nickname : "未登录"} · {plan.name} · {user.credits} 积分
                 </p>
                 {user.signedIn ? (
                   <Button variant="outline" className="mt-2" onClick={() => signOut()}>
                     退出登录
                   </Button>
                 ) : (
-                  <Button className="mt-2" onClick={() => setLoginOpen(true)}>
-                    登录
+                  <Button
+                    className="mt-2"
+                    nativeButton={false}
+                    render={<Link href={loginHref} />}
+                  >
+                    登录 / 注册
                   </Button>
                 )}
               </div>
@@ -136,33 +158,6 @@ export function SiteHeader() {
           </Sheet>
         </div>
       </div>
-
-      <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>本地登录</DialogTitle>
-            <DialogDescription>
-              无需短信或第三方账号。登录只把昵称记在这台浏览器里，方便显示积分与会员。免费生成本来就不需要登录。
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="怎么称呼你"
-          />
-          <DialogFooter>
-            <Button
-              className="bg-amber-300 text-zinc-950 hover:bg-amber-200"
-              onClick={() => {
-                signIn(nickname);
-                setLoginOpen(false);
-              }}
-            >
-              进入工作台
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </header>
   );
 }

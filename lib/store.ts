@@ -8,6 +8,7 @@ import type {
   CheckoutSession,
   CoverAsset,
   CoverGenerateInput,
+  LocalAccount,
   PlanId,
   StyleId,
   UserState,
@@ -18,6 +19,7 @@ const STORAGE_KEY = "coverfast-store-v1";
 
 export interface AppStore {
   user: UserState;
+  accounts: LocalAccount[];
   assets: CoverAsset[];
   checkouts: CheckoutSession[];
   generating: number;
@@ -42,6 +44,7 @@ function defaultUser(): UserState {
     id: uid("user"),
     signedIn: false,
     nickname: "创作者",
+    email: null,
     credits: PLANS.free.credits,
     plan: "free",
     billingCycle: null,
@@ -55,6 +58,7 @@ function defaultUser(): UserState {
 
 const emptyStore: AppStore = {
   user: defaultUser(),
+  accounts: [],
   assets: [],
   checkouts: [],
   generating: 0,
@@ -74,6 +78,7 @@ function persist() {
   try {
     const rest = {
       user: store.user,
+      accounts: store.accounts,
       assets: store.assets,
       checkouts: store.checkouts,
     };
@@ -89,6 +94,7 @@ function persist() {
         STORAGE_KEY,
         JSON.stringify({
           user: store.user,
+          accounts: store.accounts,
           assets: slimAssets,
           checkouts: store.checkouts,
         })
@@ -128,6 +134,7 @@ function hydrate() {
       const parsed = JSON.parse(raw) as Partial<AppStore>;
       store = {
         user: refreshPeriod({ ...defaultUser(), ...parsed.user }),
+        accounts: parsed.accounts ?? [],
         assets: parsed.assets ?? [],
         checkouts: parsed.checkouts ?? [],
         generating: 0,
@@ -173,11 +180,16 @@ export function needsWatermark(): boolean {
   return currentPlan().watermark;
 }
 
-export function signIn(nickname: string) {
+export function signIn(nickname: string, email?: string) {
   const name = nickname.trim() || "创作者";
   store = {
     ...store,
-    user: { ...store.user, signedIn: true, nickname: name },
+    user: {
+      ...store.user,
+      signedIn: true,
+      nickname: name,
+      email: email?.trim().toLowerCase() || store.user.email,
+    },
   };
   emit();
 }
@@ -186,6 +198,66 @@ export function signOut() {
   store = {
     ...store,
     user: { ...store.user, signedIn: false },
+  };
+  emit();
+}
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export function registerAccount(input: {
+  email: string;
+  password: string;
+  nickname: string;
+}) {
+  hydrate();
+  const email = normalizeEmail(input.email);
+  const password = input.password.trim();
+  const nickname = input.nickname.trim() || email.split("@")[0] || "创作者";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("请填写有效邮箱");
+  }
+  if (password.length < 4) {
+    throw new Error("密码至少 4 位（仅保存在本机）");
+  }
+  if (store.accounts.some((a) => a.email === email)) {
+    throw new Error("这个邮箱已经注册过，直接登录即可");
+  }
+  const account: LocalAccount = {
+    email,
+    password,
+    nickname,
+    createdAt: new Date().toISOString(),
+  };
+  store = {
+    ...store,
+    accounts: [...store.accounts, account],
+    user: {
+      ...store.user,
+      signedIn: true,
+      nickname,
+      email,
+    },
+  };
+  emit();
+}
+
+export function loginAccount(input: { email: string; password: string }) {
+  hydrate();
+  const email = normalizeEmail(input.email);
+  const account = store.accounts.find((a) => a.email === email);
+  if (!account || account.password !== input.password.trim()) {
+    throw new Error("邮箱或密码不正确");
+  }
+  store = {
+    ...store,
+    user: {
+      ...store.user,
+      signedIn: true,
+      nickname: account.nickname,
+      email: account.email,
+    },
   };
   emit();
 }

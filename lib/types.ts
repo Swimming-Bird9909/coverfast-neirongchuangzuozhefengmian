@@ -39,12 +39,21 @@ export interface CoverAsset {
   status: AssetStatus;
   brandColor?: string;
   batch?: boolean;
+  titleScale?: number;
+}
+
+export interface LocalAccount {
+  email: string;
+  password: string;
+  nickname: string;
+  createdAt: string;
 }
 
 export interface UserState {
   id: string;
   signedIn: boolean;
   nickname: string;
+  email: string | null;
   credits: number;
   plan: PlanId;
   billingCycle: BillingCycle | null;

@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandColorPicker } from "@/components/generator/brand-colors";
 import { CoverCanvas } from "@/components/generator/cover-canvas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { creditHint, estimateCredits } from "@/lib/billing/credits";
+import { CREDIT_COSTS, creditHint, estimateCredits } from "@/lib/billing/credits";
 import { PLANS } from "@/lib/billing/plans";
 import { readImageAsDataUrl } from "@/lib/image";
 import { canUseStyle, generateCover, useAppStore } from "@/lib/store";
@@ -26,6 +27,7 @@ import type {
   Quality,
   StyleId,
 } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { ImageIcon, Loader2Icon, SparklesIcon, TypeIcon, UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -228,25 +230,75 @@ export function GenerateCard({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-2 text-sm">
-          <Switch
-            checked={quality === "hd"}
-            onCheckedChange={(checked) => setQuality(checked ? "hd" : "standard")}
-          />
-          高清
-        </label>
-        <label className="flex items-center gap-2 text-sm">
+      <div className="mt-4 space-y-2">
+        <Label>清晰度 · 生成前积分</Label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => {
+              setQuality("standard");
+              setBatch(false);
+            }}
+            className={cn(
+              "rounded-xl border px-3 py-3 text-left transition",
+              quality === "standard" && !batch
+                ? "border-amber-300/70 bg-amber-300/10"
+                : "border-white/10 hover:border-white/25"
+            )}
+          >
+            <p className="text-sm font-semibold">标准</p>
+            <p className="mt-1 text-lg font-black text-amber-200">
+              {CREDIT_COSTS.standard} 积分
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              先出构图和标题，适合试风格
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setQuality("hd");
+              setBatch(false);
+            }}
+            className={cn(
+              "rounded-xl border px-3 py-3 text-left transition",
+              quality === "hd" && !batch
+                ? "border-amber-300/70 bg-amber-300/10"
+                : "border-white/10 hover:border-white/25"
+            )}
+          >
+            <p className="text-sm font-semibold">高清</p>
+            <p className="mt-1 text-lg font-black text-amber-200">
+              {CREDIT_COSTS.hd} 积分
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              按平台像素导出，适合直接发布
+            </p>
+          </button>
+        </div>
+        <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-3 text-sm">
+          <span>
+            <span className="font-medium">四平台批量</span>
+            <span className="ml-2 text-amber-200">{CREDIT_COSTS.batch} 积分</span>
+            {!plan.batchExport && !plan.fullSizePack ? (
+              <span className="ml-2 text-xs text-muted-foreground">会员</span>
+            ) : (
+              <span className="mt-1 block text-xs text-muted-foreground">
+                一次出小红书 / 短视频 / 公众号 / 缩略图
+              </span>
+            )}
+          </span>
           <Switch
             checked={batch}
             onCheckedChange={setBatch}
             disabled={!plan.batchExport && !plan.fullSizePack}
           />
-          四平台批量
-          {!plan.batchExport && !plan.fullSizePack ? (
-            <span className="text-xs text-muted-foreground">会员</span>
-          ) : null}
         </label>
+      </div>
+
+      <div className="mt-4 space-y-1.5">
+        <Label>专业版品牌色</Label>
+        <BrandColorPicker compact />
       </div>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -287,6 +339,7 @@ export function GenerateCard({
                   imageDataUrl,
                   quality,
                 }}
+                brandColor={plan.brandColors ? user.brandColor : undefined}
                 className="pointer-events-none"
               />
               <p className="mt-1 text-xs text-muted-foreground">{p.shortName}</p>

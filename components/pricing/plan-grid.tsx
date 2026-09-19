@@ -10,10 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { PLAN_LIST, planPrice } from "@/lib/billing/plans";
 import { useAppStore } from "@/lib/store";
 import type { BillingCycle, PlanId } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,18 +27,46 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
   return (
     <div>
       <div className="mb-8 flex flex-col items-center gap-3">
-        <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/4 px-4 py-2 text-sm">
-          <span className={cycle === "month" ? "text-foreground" : "text-muted-foreground"}>
+        <div
+          role="group"
+          aria-label="计费周期"
+          className="inline-flex items-center rounded-full border border-white/10 bg-white/4 p-1 text-sm"
+        >
+          <button
+            type="button"
+            aria-pressed={cycle === "month"}
+            onClick={() => setCycle("month")}
+            className={cn(
+              "min-h-10 min-w-[5.5rem] rounded-full px-4 font-medium transition",
+              cycle === "month"
+                ? "bg-white text-zinc-950"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
             按月
-          </span>
-          <Switch
-            checked={cycle === "year"}
-            onCheckedChange={(checked) => setCycle(checked ? "year" : "month")}
-          />
-          <span className={cycle === "year" ? "text-foreground" : "text-muted-foreground"}>
+          </button>
+          <button
+            type="button"
+            aria-pressed={cycle === "year"}
+            onClick={() => setCycle("year")}
+            className={cn(
+              "flex min-h-10 min-w-[7.5rem] items-center justify-center gap-2 rounded-full px-4 font-medium transition",
+              cycle === "year"
+                ? "bg-amber-300 text-zinc-950"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
             按年
-          </span>
-          <Badge className="bg-amber-300 text-zinc-950">-30%</Badge>
+            <Badge
+              className={
+                cycle === "year"
+                  ? "bg-zinc-950 text-amber-200"
+                  : "bg-amber-300 text-zinc-950"
+              }
+            >
+              -30%
+            </Badge>
+          </button>
         </div>
       </div>
 

@@ -159,6 +159,7 @@ export async function drawCover(
     | "mode"
     | "imageDataUrl"
     | "quality"
+    | "titleScale"
   >,
   options: CoverRenderOptions = {}
 ) {
@@ -212,13 +213,15 @@ export async function drawCover(
   ctx.fillStyle = style.badgeColor;
   ctx.fillText(asset.badge, padX + badgePadX, badgeY + badgeH * 0.72);
 
-  const titleSize = isPoster
-    ? landscape
-      ? h * 0.38
-      : w * 0.14
-    : landscape
-      ? h * 0.28
-      : w * 0.11;
+  const scale = asset.titleScale ?? 1;
+  const titleSize =
+    (isPoster
+      ? landscape
+        ? h * 0.38
+        : w * 0.14
+      : landscape
+        ? h * 0.28
+        : w * 0.11) * scale;
   ctx.font = `${style.titleWeight} ${titleSize}px "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif`;
   ctx.fillStyle = style.titleColor;
   const titleLines = wrapText(ctx, asset.title, safeW);

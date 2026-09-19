@@ -35,9 +35,15 @@ export function SiteFooter() {
             <Link className="text-muted-foreground hover:text-foreground" href="/about">
               关于
             </Link>
+            <Link className="text-muted-foreground hover:text-foreground" href="/changelog">
+              更新日志
+            </Link>
           </div>
           <div className="flex flex-col gap-2">
             <span className="font-medium text-foreground">支持</span>
+            <Link className="text-muted-foreground hover:text-foreground" href="/login">
+              登录
+            </Link>
             <a
               className="text-muted-foreground hover:text-foreground"
               href="mailto:support@coverfast.app"

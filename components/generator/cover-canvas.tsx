@@ -16,10 +16,13 @@ interface CoverCanvasProps {
     | "mode"
     | "imageDataUrl"
     | "quality"
+    | "titleScale"
   >;
   watermark?: boolean;
   brandColor?: string;
   className?: string;
+  editable?: boolean;
+  onChange?: (patch: Partial<CoverAsset>) => void;
 }
 
 export function CoverCanvas({
@@ -27,12 +30,15 @@ export function CoverCanvas({
   watermark = false,
   brandColor,
   className,
+  editable = false,
+  onChange,
 }: CoverCanvasProps) {
   const platform = PLATFORMS[asset.platformId];
   const style = COVER_STYLES[asset.styleId];
   const accent = brandColor || style.accent;
   const landscape = platform.width / platform.height > 1.4;
   const isPoster = asset.styleId === "poster";
+  const scale = asset.titleScale ?? 1;
 
   const patternClass =
     style.pattern === "grid"
@@ -42,6 +48,14 @@ export function CoverCanvas({
         : style.pattern === "slash"
           ? "bg-[repeating-linear-gradient(-28deg,transparent,transparent_18px,rgb(255_255_255/0.08)_18px,rgb(255_255_255/0.08)_22px)]"
           : "";
+
+  const titleSize = landscape
+    ? isPoster
+      ? `${1.15 * scale}rem`
+      : `${1.05 * scale}rem`
+    : isPoster
+      ? `clamp(${1.4 * scale}rem, ${9 * scale}cqw, ${2.6 * scale}rem)`
+      : `clamp(${1.15 * scale}rem, ${7.2 * scale}cqw, ${2.1 * scale}rem)`;
 
   return (
     <div
@@ -94,16 +108,29 @@ export function CoverCanvas({
         )}
       >
         <div className="flex items-start justify-between gap-2">
-          <span
-            className="inline-flex max-w-[70%] items-center rounded-full px-[0.7em] py-[0.22em] text-[0.62em] font-bold tracking-wide"
-            style={{
-              background: brandColor || style.badgeBg,
-              color: style.badgeColor,
-              fontSize: landscape ? "0.72rem" : "clamp(0.65rem, 3.2cqw, 0.9rem)",
-            }}
-          >
-            {asset.badge}
-          </span>
+          {editable ? (
+            <input
+              value={asset.badge}
+              onChange={(e) => onChange?.({ badge: e.target.value })}
+              className="max-w-[70%] rounded-full border border-white/0 bg-white/10 px-[0.7em] py-[0.22em] font-bold tracking-wide outline-none ring-amber-300/0 focus:ring-2"
+              style={{
+                background: brandColor || style.badgeBg,
+                color: style.badgeColor,
+                fontSize: landscape ? "0.72rem" : "clamp(0.65rem, 3.2cqw, 0.9rem)",
+              }}
+            />
+          ) : (
+            <span
+              className="inline-flex max-w-[70%] items-center rounded-full px-[0.7em] py-[0.22em] text-[0.62em] font-bold tracking-wide"
+              style={{
+                background: brandColor || style.badgeBg,
+                color: style.badgeColor,
+                fontSize: landscape ? "0.72rem" : "clamp(0.65rem, 3.2cqw, 0.9rem)",
+              }}
+            >
+              {asset.badge}
+            </span>
+          )}
           <span
             className="text-[0.58em] font-semibold"
             style={{
@@ -116,35 +143,59 @@ export function CoverCanvas({
         </div>
 
         <div className={cn("mt-auto", landscape ? "mb-0" : "mb-[8%]")}>
-          <h3
-            className={cn(
-              "leading-[1.18] break-all",
-              isPoster ? "font-black" : "font-extrabold"
-            )}
-            style={{
-              color: style.titleColor,
-              fontSize: landscape
-                ? isPoster
-                  ? "1.15rem"
-                  : "1.05rem"
-                : isPoster
-                  ? "clamp(1.4rem, 9cqw, 2.6rem)"
-                  : "clamp(1.15rem, 7.2cqw, 2.1rem)",
-            }}
-          >
-            {asset.title}
-          </h3>
-          <p
-            className="mt-[0.45em] line-clamp-2 font-medium"
-            style={{
-              color: style.subtitleColor,
-              fontSize: landscape
-                ? "0.7rem"
-                : "clamp(0.65rem, 3.4cqw, 0.95rem)",
-            }}
-          >
-            {asset.subtitle}
-          </p>
+          {editable ? (
+            <textarea
+              value={asset.title}
+              rows={3}
+              onChange={(e) => onChange?.({ title: e.target.value })}
+              className={cn(
+                "w-full resize-none bg-transparent leading-[1.18] break-all outline-none ring-1 ring-white/20 focus:ring-amber-300/70",
+                isPoster ? "font-black" : "font-extrabold"
+              )}
+              style={{
+                color: style.titleColor,
+                fontSize: titleSize,
+              }}
+            />
+          ) : (
+            <h3
+              className={cn(
+                "leading-[1.18] break-all",
+                isPoster ? "font-black" : "font-extrabold"
+              )}
+              style={{
+                color: style.titleColor,
+                fontSize: titleSize,
+              }}
+            >
+              {asset.title}
+            </h3>
+          )}
+          {editable ? (
+            <input
+              value={asset.subtitle}
+              onChange={(e) => onChange?.({ subtitle: e.target.value })}
+              className="mt-[0.45em] w-full bg-transparent font-medium outline-none ring-1 ring-white/15 focus:ring-amber-300/70"
+              style={{
+                color: style.subtitleColor,
+                fontSize: landscape
+                  ? "0.7rem"
+                  : "clamp(0.65rem, 3.4cqw, 0.95rem)",
+              }}
+            />
+          ) : (
+            <p
+              className="mt-[0.45em] line-clamp-2 font-medium"
+              style={{
+                color: style.subtitleColor,
+                fontSize: landscape
+                  ? "0.7rem"
+                  : "clamp(0.65rem, 3.4cqw, 0.95rem)",
+              }}
+            >
+              {asset.subtitle}
+            </p>
+          )}
           <div
             className="mt-[0.8em] h-[3px] w-[28%] rounded-full"
             style={{ background: accent }}
@@ -167,6 +218,22 @@ export function CoverCanvas({
         >
           HD
         </span>
+      ) : null}
+
+      {editable ? (
+        <label className="absolute right-[6%] bottom-[4%] flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-[11px] text-white backdrop-blur-sm">
+          字号
+          <input
+            type="range"
+            min={0.75}
+            max={1.35}
+            step={0.05}
+            value={scale}
+            onChange={(e) => onChange?.({ titleScale: Number(e.target.value) })}
+            className="w-20 accent-amber-300"
+          />
+          {Math.round(scale * 100)}%
+        </label>
       ) : null}
     </div>
   );
