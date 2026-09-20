@@ -16,10 +16,17 @@ export async function persistLocale(locale: AppLocale) {
   document.cookie = `${LOCALE_MANUAL_COOKIE}=1; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
   window.localStorage.setItem(LOCALE_STORAGE, locale);
   window.localStorage.setItem(LOCALE_MANUAL_STORAGE, "1");
-  await fetch("/api/locale", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ locale }),
-  });
+  try {
+    await Promise.race([
+      fetch("/api/locale", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ locale }),
+      }),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
+  } catch {
+    /* cookie already set on the client */
+  }
   window.location.reload();
 }

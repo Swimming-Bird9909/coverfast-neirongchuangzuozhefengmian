@@ -43,7 +43,7 @@ export function SiteHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/8 bg-[#07080d]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 overflow-visible border-b border-white/8 bg-[#07080d]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-black tracking-tight">
           <span className="grid size-8 place-items-center rounded-lg bg-linear-to-br from-amber-300 to-orange-500 text-[#1a0b04] shadow-[0_0_24px_rgba(251,191,36,0.35)]">
@@ -72,7 +72,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="relative z-[80] flex items-center gap-2">
           <Link
             href="/pricing"
             className="hidden items-center gap-1 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200 sm:inline-flex"
