@@ -1,4 +1,5 @@
 import { generateCopyPack } from "@/lib/copy/titles";
+import { tRuntime } from "@/i18n/runtime";
 import type { CoverProvider } from "@/lib/providers/cover-provider";
 import { PLATFORM_LIST } from "@/lib/templates/platforms";
 import type { CoverAsset, CoverGenerateInput } from "@/lib/types";
@@ -17,7 +18,7 @@ export const LocalTemplateProvider: CoverProvider = {
     const copy = generateCopyPack(input.topic, input.platformId);
     const asset: CoverAsset = {
       id: uid("cv"),
-      topic: input.topic.trim() || "未命名选题",
+      topic: input.topic.trim() || tRuntime("common.untitled"),
       mode: input.mode,
       imageDataUrl: input.imageDataUrl,
       platformId: input.platformId,
@@ -36,7 +37,9 @@ export const LocalTemplateProvider: CoverProvider = {
     };
 
     if (input.batch) {
-      asset.subtitle = `四平台尺寸包 · ${PLATFORM_LIST.map((p) => p.shortName).join(" / ")}`;
+      asset.subtitle = tRuntime("copy.batchSubtitle", {
+        names: PLATFORM_LIST.map((p) => tRuntime(`platforms.${p.id}.shortName`)).join(" / "),
+      });
     }
 
     return { asset };

@@ -15,8 +15,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { CREDIT_COSTS, creditHint, estimateCredits } from "@/lib/billing/credits";
+import { CREDIT_COSTS, estimateCredits } from "@/lib/billing/credits";
 import { PLANS } from "@/lib/billing/plans";
+import { formatAppError } from "@/lib/app-error";
 import { readImageAsDataUrl } from "@/lib/image";
 import { canUseStyle, generateCover, useAppStore } from "@/lib/store";
 import { PLATFORM_LIST } from "@/lib/templates/platforms";
@@ -29,6 +30,7 @@ import type {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ImageIcon, Loader2Icon, SparklesIcon, TypeIcon, UploadIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +54,8 @@ export function GenerateCard({
   const { user, generating } = useAppStore();
   const plan = PLANS[user.plan];
   const fileRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations();
+  const te = useTranslations("errors");
 
   const [mode, setMode] = useState<GenerateMode>(initialMode);
   const [topic, setTopic] = useState(initialTopic);
@@ -65,29 +69,35 @@ export function GenerateCard({
   const cost = estimateCredits({ quality, batch });
   const lockedStyle = !canUseStyle(styleId);
 
+  const hint = batch
+    ? t("generate.hintBatch", { cost })
+    : quality === "hd"
+      ? t("generate.hintHd", { cost })
+      : t("generate.hintStandard", { cost });
+
   async function onUpload(file?: File | null) {
     if (!file) return;
     try {
       const url = await readImageAsDataUrl(file);
       setImageDataUrl(url);
       setMode("image");
-      toast.success("参考图已就绪，将作为封面背景");
+      toast.success(t("generate.imageReady"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "图片读取失败");
+      toast.error(formatAppError(error, te as never));
     }
   }
 
   async function onGenerate() {
     if (!topic.trim() && mode === "text") {
-      toast.error("先写一句选题或卖点");
+      toast.error(t("generate.needTopic"));
       return;
     }
     if (mode === "image" && !imageDataUrl) {
-      toast.error("请先上传参考图");
+      toast.error(t("generate.needImage"));
       return;
     }
     if (lockedStyle) {
-      toast.error("该风格需要创作者或专业会员");
+      toast.error(t("generate.styleLocked"));
       router.push("/pricing");
       return;
     }
@@ -95,7 +105,7 @@ export function GenerateCard({
     try {
       const asset = await generateCover({
         mode,
-        topic: topic.trim() || "用这张图做封面",
+        topic: topic.trim() || t("generate.defaultTopic"),
         imageDataUrl,
         platformId,
         styleId,
@@ -103,26 +113,26 @@ export function GenerateCard({
         batch,
         brandColor: plan.brandColors ? user.brandColor : undefined,
       });
-      toast.success("封面已生成，去工作台微调标题和导出");
+      toast.success(t("generate.generated"));
       router.push(`/generate?id=${asset.id}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "生成失败");
+      toast.error(formatAppError(error, te as never, "generic"));
     } finally {
       setBusy(false);
     }
   }
 
   const waitHint = plan.priorityQueue
-    ? "优先队列 · 约 2 秒"
-    : "标准队列 · 约 8 秒（本地模板实际更快）";
+    ? t("generate.queuePriority")
+    : t("generate.queueStandard");
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#101218]/90 p-4 shadow-[0_0_80px_-24px_rgba(251,191,36,0.45)] ring-1 ring-amber-300/15 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-medium">封面生成器</p>
+          <p className="text-sm font-medium">{t("generate.cardTitle")}</p>
           <p className="text-xs text-muted-foreground">
-            文字选题或上传参考图，本地模板秒出四平台尺寸
+            {t("generate.cardSub")}
           </p>
         </div>
         <Badge variant="secondary">{waitHint}</Badge>
@@ -137,18 +147,18 @@ export function GenerateCard({
         <TabsList className="mb-4">
           <TabsTrigger value="text">
             <TypeIcon data-icon="inline-start" />
-            文生封面
+            {t("generate.textMode")}
           </TabsTrigger>
           <TabsTrigger value="image">
             <ImageIcon data-icon="inline-start" />
-            图生封面
+            {t("generate.imageMode")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="text">
           <Textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="例如：小红书封面怎么做出点击欲 / 三款无线麦真实对比"
+            placeholder={t("generate.topicPlaceholder")}
             className="min-h-24 text-base"
           />
         </TabsContent>
@@ -162,18 +172,18 @@ export function GenerateCard({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={imageDataUrl}
-                alt="参考图预览"
+                alt={t("generate.imageAlt")}
                 className="h-20 rounded-lg object-cover"
               />
             ) : (
               <UploadIcon className="size-5" />
             )}
-            {imageDataUrl ? "更换参考图" : "上传参考图作为背景"}
+            {imageDataUrl ? t("generate.replaceImage") : t("generate.upload")}
           </button>
           <Textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="补充选题（可选，用于生成标题）"
+            placeholder={t("generate.topicOptional")}
             className="min-h-16"
           />
         </TabsContent>
@@ -188,7 +198,7 @@ export function GenerateCard({
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label>平台尺寸</Label>
+          <Label>{t("generate.platform")}</Label>
           <Select
             value={platformId}
             onValueChange={(v) => {
@@ -201,14 +211,14 @@ export function GenerateCard({
             <SelectContent>
               {PLATFORM_LIST.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {p.shortName} · {p.ratio} · {p.width}×{p.height}
+                  {t(`platforms.${p.id}.shortName`)} · {p.ratio} · {p.width}×{p.height}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>风格</Label>
+          <Label>{t("generate.style")}</Label>
           <Select
             value={styleId}
             onValueChange={(v) => {
@@ -221,8 +231,8 @@ export function GenerateCard({
             <SelectContent>
               {STYLE_LIST.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                  {!canUseStyle(s.id) ? " · 会员" : ""}
+                  {t(`styles.${s.id}.name`)}
+                  {!canUseStyle(s.id) ? t("generate.styleMember") : ""}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -231,7 +241,7 @@ export function GenerateCard({
       </div>
 
       <div className="mt-4 space-y-2">
-        <Label>清晰度 · 生成前积分</Label>
+        <Label>{t("generate.qualityLabel")}</Label>
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             type="button"
@@ -246,12 +256,12 @@ export function GenerateCard({
                 : "border-white/10 hover:border-white/25"
             )}
           >
-            <p className="text-sm font-semibold">标准</p>
+            <p className="text-sm font-semibold">{t("generate.standard")}</p>
             <p className="mt-1 text-lg font-black text-amber-200">
-              {CREDIT_COSTS.standard} 积分
+              {t("common.creditsCount", { count: CREDIT_COSTS.standard })}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              先出构图和标题，适合试风格
+              {t("generate.standardHint")}
             </p>
           </button>
           <button
@@ -267,24 +277,26 @@ export function GenerateCard({
                 : "border-white/10 hover:border-white/25"
             )}
           >
-            <p className="text-sm font-semibold">高清</p>
+            <p className="text-sm font-semibold">{t("generate.hd")}</p>
             <p className="mt-1 text-lg font-black text-amber-200">
-              {CREDIT_COSTS.hd} 积分
+              {t("common.creditsCount", { count: CREDIT_COSTS.hd })}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              按平台像素导出，适合直接发布
+              {t("generate.hdHint")}
             </p>
           </button>
         </div>
         <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-3 text-sm">
           <span>
-            <span className="font-medium">四平台批量</span>
-            <span className="ml-2 text-amber-200">{CREDIT_COSTS.batch} 积分</span>
+            <span className="font-medium">{t("generate.batch")}</span>
+            <span className="ms-2 text-amber-200">
+              {t("common.creditsCount", { count: CREDIT_COSTS.batch })}
+            </span>
             {!plan.batchExport && !plan.fullSizePack ? (
-              <span className="ml-2 text-xs text-muted-foreground">会员</span>
+              <span className="ms-2 text-xs text-muted-foreground">{t("common.member")}</span>
             ) : (
               <span className="mt-1 block text-xs text-muted-foreground">
-                一次出小红书 / 短视频 / 公众号 / 缩略图
+                {t("generate.batchHint")}
               </span>
             )}
           </span>
@@ -297,13 +309,13 @@ export function GenerateCard({
       </div>
 
       <div className="mt-4 space-y-1.5">
-        <Label>专业版品牌色</Label>
+        <Label>{t("generate.brandLabel")}</Label>
         <BrandColorPicker compact />
       </div>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-amber-200/90">
-          {creditHint({ quality, batch })} · 余额 {user.credits}
+          {t("generate.creditLine", { hint, credits: user.credits })}
         </p>
         <Button
           className="h-11 bg-amber-300 px-6 text-base text-zinc-950 hover:bg-amber-200"
@@ -315,7 +327,7 @@ export function GenerateCard({
           ) : (
             <SparklesIcon />
           )}
-          {busy ? "生成中…" : `免费生成 · ${cost} 积分`}
+          {busy ? t("generate.busy") : t("generate.cta", { cost })}
         </Button>
       </div>
 
@@ -330,9 +342,9 @@ export function GenerateCard({
             >
               <CoverCanvas
                 asset={{
-                  title: topic.trim() || p.name,
-                  subtitle: p.description,
-                  badge: "预览",
+                  title: topic.trim() || t(`platforms.${p.id}.name`),
+                  subtitle: t(`platforms.${p.id}.description`),
+                  badge: t("common.preview"),
                   platformId: p.id,
                   styleId,
                   mode: imageDataUrl ? "image" : "text",
@@ -342,7 +354,7 @@ export function GenerateCard({
                 brandColor={plan.brandColors ? user.brandColor : undefined}
                 className="pointer-events-none"
               />
-              <p className="mt-1 text-xs text-muted-foreground">{p.shortName}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t(`platforms.${p.id}.shortName`)}</p>
             </button>
           ))}
         </div>

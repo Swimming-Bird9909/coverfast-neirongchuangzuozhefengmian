@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatAppError } from "@/lib/app-error";
 import { CREDIT_COSTS } from "@/lib/billing/credits";
 import { PLANS } from "@/lib/billing/plans";
 import {
@@ -31,6 +32,7 @@ import { PLATFORM_LIST } from "@/lib/templates/platforms";
 import { STYLE_LIST } from "@/lib/templates/styles";
 import type { CoverAsset, PlatformId, StyleId } from "@/lib/types";
 import { DownloadIcon, Loader2Icon, LockIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -41,6 +43,9 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
   const [exporting, setExporting] = useState(false);
   const watermark = needsWatermark();
   const brandColor = plan.brandColors ? user.brandColor : asset.brandColor;
+  const t = useTranslations();
+  const te = useTranslations("errors");
+  const platform = PLATFORM_LIST.find((p) => p.id === asset.platformId);
 
   function patch(next: Partial<CoverAsset>) {
     updateAsset(asset.id, next);
@@ -49,7 +54,7 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
   async function exportOne(target: CoverAsset, platformId?: PlatformId) {
     const gate = beginDownload();
     if (!gate.ok) {
-      toast.error(gate.reason);
+      toast.error(formatAppError(new Error(gate.reason), te as never));
       return;
     }
     try {
@@ -57,26 +62,28 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
       const png = await renderCoverPng(payload, {
         watermark,
         brandColor,
+        watermarkLabel: t("brand.watermark"),
+        platformLabel: t(`platforms.${payload.platformId}.shortName`),
       });
-      downloadDataUrl(png, assetFileName(payload));
+      downloadDataUrl(png, assetFileName(payload, payload.platformId, t("brand.name")));
       toast.success(
-        watermark ? "已下载（含闪封面水印）" : "已下载无水印 PNG"
+        watermark ? t("workbench.downloadedWm") : t("workbench.downloaded")
       );
     } catch (error) {
       refundDownload();
-      toast.error(error instanceof Error ? error.message : "导出失败");
+      toast.error(formatAppError(error, te as never, "generic"));
     }
   }
 
   async function exportBatch() {
     if (!plan.batchExport && !plan.fullSizePack) {
-      toast.error("批量导出需要创作者或专业会员");
+      toast.error(t("workbench.batchLocked"));
       return;
     }
     setExporting(true);
     try {
-      for (const platform of PLATFORM_LIST) {
-        await exportOne(asset, platform.id);
+      for (const item of PLATFORM_LIST) {
+        await exportOne(asset, item.id);
       }
     } finally {
       setExporting(false);
@@ -95,30 +102,30 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
           onChange={patch}
         />
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          点封面即可改标题、副标题和角标 · 右下角调字号 · 当前{" "}
-          {PLATFORM_LIST.find((p) => p.id === asset.platformId)?.width}×
-          {PLATFORM_LIST.find((p) => p.id === asset.platformId)?.height}
-          {watermark ? " · 免费导出带水印" : " · 会员无水印"}
+          {t("workbench.canvasHint", {
+            size: platform ? `${platform.width}×${platform.height}` : "",
+          })}
+          {watermark ? t("workbench.watermarkOn") : t("workbench.watermarkOff")}
         </p>
       </div>
 
       <div className="space-y-5">
         <div className="space-y-1.5">
-          <Label>主标题</Label>
+          <Label>{t("workbench.title")}</Label>
           <Input
             value={asset.title}
             onChange={(e) => patch({ title: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
-          <Label>副标题</Label>
+          <Label>{t("workbench.subtitle")}</Label>
           <Input
             value={asset.subtitle}
             onChange={(e) => patch({ subtitle: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
-          <Label>角标</Label>
+          <Label>{t("workbench.badge")}</Label>
           <Input
             value={asset.badge}
             onChange={(e) => patch({ badge: e.target.value })}
@@ -126,12 +133,12 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
         </div>
 
         <div className="space-y-1.5">
-          <Label>专业版品牌色</Label>
+          <Label>{t("generate.brandLabel")}</Label>
           <BrandColorPicker onPick={(color) => patch({ brandColor: color })} />
         </div>
 
         <div className="space-y-1.5">
-          <Label>标题字号 {Math.round((asset.titleScale ?? 1) * 100)}%</Label>
+          <Label>{t("workbench.titleScale", { percent: Math.round((asset.titleScale ?? 1) * 100) })}</Label>
           <input
             type="range"
             min={0.75}
@@ -145,7 +152,7 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>平台</Label>
+            <Label>{t("workbench.platform")}</Label>
             <Select
               value={asset.platformId}
               onValueChange={(v) => {
@@ -158,20 +165,20 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
               <SelectContent>
                 {PLATFORM_LIST.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.shortName}
+                    {t(`platforms.${p.id}.shortName`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>风格</Label>
+            <Label>{t("workbench.style")}</Label>
             <Select
               value={asset.styleId}
               onValueChange={(v) => {
                 if (!v) return;
                 if (!canUseStyle(v as StyleId)) {
-                  toast.error("该风格需要升级会员");
+                  toast.error(t("workbench.styleUpgrade"));
                   return;
                 }
                 patch({ styleId: v as StyleId });
@@ -183,7 +190,7 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
               <SelectContent>
                 {STYLE_LIST.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.name}
+                    {t(`styles.${s.id}.name`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -192,7 +199,7 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
         </div>
 
         <div>
-          <Label className="mb-2">配套标题 · 点选即可替换主标题</Label>
+          <Label className="mb-2">{t("workbench.companion")}</Label>
           <div className="mt-2 space-y-2">
             {asset.titles.map((title, index) => (
               <button
@@ -216,7 +223,7 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
             onClick={() => exportOne(asset)}
           >
             <DownloadIcon />
-            导出当前尺寸 PNG
+            {t("workbench.exportOne")}
           </Button>
           <Button
             variant="outline"
@@ -225,21 +232,21 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
           >
             {exporting ? <Loader2Icon className="animate-spin" /> : <DownloadIcon />}
             {plan.batchExport || plan.fullSizePack
-              ? `批量导出四平台（${CREDIT_COSTS.batch} 积分已在生成时结算）`
+              ? t("workbench.exportBatch", { cost: CREDIT_COSTS.batch })
               : (
                   <>
                     <LockIcon />
-                    批量导出需会员
+                    {t("workbench.exportLocked")}
                   </>
                 )}
           </Button>
           {watermark ? (
             <p className="text-xs text-muted-foreground">
-              去掉水印、放开每日下载次数，去
+              {t("workbench.removeWatermark")}
               <Link href="/pricing" className="mx-1 underline">
-                定价页
+                {t("workbench.pricingLink")}
               </Link>
-              开通创作者。
+              {t("workbench.openCreator")}
             </p>
           ) : null}
         </div>

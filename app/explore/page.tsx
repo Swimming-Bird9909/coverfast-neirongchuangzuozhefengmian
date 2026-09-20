@@ -1,9 +1,11 @@
 import { InspirationWall } from "@/components/explore/inspiration-wall";
+import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "灵感广场 · 闪封面",
-  description: "浏览创作者封面，一键用同款进入生成器。",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("explore");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default function ExplorePage() {
   return (

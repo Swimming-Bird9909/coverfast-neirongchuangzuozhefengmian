@@ -1,5 +1,6 @@
 "use client";
 
+import { formatAppError } from "@/lib/app-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { PLANS, planPrice } from "@/lib/billing/plans";
 import { signIn, useAppStore } from "@/lib/store";
 import type { BillingCycle, PlanId } from "@/lib/types";
 import { Loader2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
@@ -20,6 +22,8 @@ function CheckoutInner() {
   const { user } = useAppStore();
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState(user.nickname);
+  const t = useTranslations();
+  const te = useTranslations("errors");
 
   const planId = (params.get("plan") === "pro" ? "pro" : "creator") as Exclude<
     PlanId,
@@ -28,6 +32,7 @@ function CheckoutInner() {
   const cycle = (params.get("cycle") === "month" ? "month" : "year") as BillingCycle;
   const plan = PLANS[planId];
   const price = useMemo(() => planPrice(planId, cycle), [planId, cycle]);
+  const planName = t(`plans.${planId}.name`);
 
   async function confirm() {
     setBusy(true);
@@ -39,10 +44,10 @@ function CheckoutInner() {
       });
       await MockPaymentPort.confirm(session.id);
       signIn(name);
-      toast.success(`已开通${plan.name}，积分已到账`);
+      toast.success(t("checkout.ok", { plan: planName }));
       router.push("/assets");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "开通失败");
+      toast.error(formatAppError(error, te as never, "generic"));
     } finally {
       setBusy(false);
     }
@@ -51,24 +56,24 @@ function CheckoutInner() {
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
       <div>
-        <p className="text-sm text-amber-200">模拟收银台</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight">确认开通会员</h1>
+        <p className="text-sm text-amber-200">{t("checkout.kicker")}</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight">{t("checkout.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          这是支付适配层的第一期实现（MockPaymentPort）。确认后会在本地写入会员状态与积分，不会产生真实扣款。接口形状已按后续微信 / 支付宝 / Stripe 预留。
+          {t("checkout.body")}
         </p>
 
         <Card className="mt-8 bg-[#101218]">
           <CardHeader>
-            <CardTitle>账单信息</CardTitle>
-            <CardDescription>仅用于显示在本地会员记录中</CardDescription>
+            <CardTitle>{t("checkout.billTitle")}</CardTitle>
+            <CardDescription>{t("checkout.billDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label>称呼</Label>
+              <Label>{t("checkout.name")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="rounded-xl border border-dashed border-white/15 p-4 text-sm text-muted-foreground">
-              支付方式：模拟支付（后期可替换为微信支付、支付宝或国际卡）。
+              {t("checkout.method")}
             </div>
             <Button
               className="h-11 w-full bg-amber-300 text-zinc-950 hover:bg-amber-200"
@@ -76,7 +81,7 @@ function CheckoutInner() {
               onClick={confirm}
             >
               {busy ? <Loader2Icon className="animate-spin" /> : null}
-              确认模拟支付 ¥{price.billed}
+              {t("checkout.pay", { amount: price.billed })}
             </Button>
           </CardContent>
         </Card>
@@ -84,23 +89,23 @@ function CheckoutInner() {
 
       <Card className="h-fit bg-[#14120c] ring-1 ring-amber-300/20">
         <CardHeader>
-          <CardTitle>{plan.name}</CardTitle>
+          <CardTitle>{planName}</CardTitle>
           <CardDescription>
-            {cycle === "year" ? "年付 · 已减 30%" : "月付"}
+            {cycle === "year" ? t("checkout.cycleYear") : t("checkout.cycleMonth")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p className="text-3xl font-black">¥{price.billed}</p>
           <p className="text-muted-foreground">
-            折合 ¥{price.monthly}/月 · 到账 {plan.credits} 积分
+            {t("checkout.equiv", { monthly: price.monthly, credits: plan.credits })}
           </p>
           <ul className="space-y-2 text-muted-foreground">
-            {plan.features.map((f) => (
-              <li key={f}>{f}</li>
+            {(["f1", "f2", "f3", "f4", "f5"] as const).map((key) => (
+              <li key={key}>{t(`plans.${planId}.${key}`)}</li>
             ))}
           </ul>
           <Button variant="ghost" className="px-0" nativeButton={false} render={<Link href="/pricing" />}>
-            返回改套餐
+            {t("checkout.back")}
           </Button>
         </CardContent>
       </Card>
@@ -109,10 +114,11 @@ function CheckoutInner() {
 }
 
 export default function CheckoutPage() {
+  const t = useTranslations("checkout");
   return (
     <Suspense
       fallback={
-        <div className="px-4 py-20 text-center text-muted-foreground">正在准备订单…</div>
+        <div className="px-4 py-20 text-center text-muted-foreground">{t("preparing")}</div>
       }
     >
       <CheckoutInner />

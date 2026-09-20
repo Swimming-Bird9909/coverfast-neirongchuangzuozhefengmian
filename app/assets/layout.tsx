@@ -1,7 +1,10 @@
-export const metadata = {
-  title: "我的作品",
-  description: "查看本地保存的封面、下载进度与导出。",
-};
+import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("assets");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default function AssetsLayout({
   children,

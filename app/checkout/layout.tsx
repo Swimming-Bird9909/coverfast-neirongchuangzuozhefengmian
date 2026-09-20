@@ -1,7 +1,10 @@
-export const metadata = {
-  title: "模拟支付",
-  description: "确认开通闪封面会员，写入本地积分与套餐。",
-};
+import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("checkout");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default function CheckoutLayout({
   children,

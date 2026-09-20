@@ -5,6 +5,8 @@ import type { CoverAsset } from "@/lib/types";
 export interface CoverRenderOptions {
   watermark?: boolean;
   brandColor?: string;
+  watermarkLabel?: string;
+  platformLabel?: string;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -45,7 +47,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("参考图加载失败"));
+    img.onerror = () => reject(new Error("CF_imageLoad"));
     img.src = src;
   });
 }
@@ -197,7 +199,7 @@ export async function drawCover(
   ctx.save();
   ctx.fillStyle = accent;
   ctx.font = `700 ${Math.max(16, w * 0.028)}px "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif`;
-  const platformLabel = platform.shortName;
+  const platformLabel = options.platformLabel || platform.shortName;
   ctx.fillText(platformLabel, w - padX - ctx.measureText(platformLabel).width, padY + h * 0.02);
   ctx.restore();
 
@@ -256,7 +258,7 @@ export async function drawCover(
     ctx.rotate(-Math.PI / 7);
     ctx.fillStyle = "rgba(255,255,255,0.18)";
     ctx.font = `700 ${Math.max(28, w * 0.08)}px "Noto Sans SC", "PingFang SC", sans-serif`;
-    ctx.fillText("闪封面 CoverFast", 0, 0);
+    ctx.fillText(options.watermarkLabel || "CoverFast", 0, 0);
     ctx.restore();
   }
 
@@ -276,7 +278,7 @@ export async function renderCoverPng(
   canvas.width = platform.width;
   canvas.height = platform.height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("当前浏览器不支持画布导出");
+  if (!ctx) throw new Error("CF_canvas");
   await drawCover(ctx, asset, options);
   return canvas.toDataURL("image/png");
 }
@@ -291,7 +293,12 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
   a.remove();
 }
 
-export function assetFileName(asset: CoverAsset, platformId = asset.platformId) {
+export function assetFileName(
+  asset: CoverAsset,
+  platformId = asset.platformId,
+  brand = "CoverFast"
+) {
   const platform = getPlatform(platformId);
-  return `闪封面-${platform.shortName}-${asset.topic.slice(0, 12)}.png`;
+  const topic = asset.topic.slice(0, 12) || "cover";
+  return `${brand}-${platform.id}-${topic}.png`;
 }

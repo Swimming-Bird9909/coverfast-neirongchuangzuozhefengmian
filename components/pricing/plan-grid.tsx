@@ -15,21 +15,25 @@ import { useAppStore } from "@/lib/store";
 import type { BillingCycle, PlanId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+const FEATURE_KEYS = ["f1", "f2", "f3", "f4", "f5"] as const;
 
 export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
   const [cycle, setCycle] = useState<BillingCycle>("year");
   const { user } = useAppStore();
   const router = useRouter();
   const plans = teaser ? PLAN_LIST : PLAN_LIST;
+  const t = useTranslations();
 
   return (
     <div>
       <div className="mb-8 flex flex-col items-center gap-3">
         <div
           role="group"
-          aria-label="计费周期"
+          aria-label={t("plans.cycleAria")}
           className="inline-flex items-center rounded-full border border-white/10 bg-white/4 p-1 text-sm"
         >
           <button
@@ -43,7 +47,7 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            按月
+            {t("plans.monthly")}
           </button>
           <button
             type="button"
@@ -56,7 +60,7 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            按年
+            {t("plans.yearly")}
             <Badge
               className={
                 cycle === "year"
@@ -78,6 +82,7 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
             : null;
           const current = user.plan === plan.id;
           const highlight = plan.id === "creator";
+          const planName = t(`plans.${plan.id}.name`);
 
           return (
             <Card
@@ -90,16 +95,16 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  {plan.name}
-                  {highlight ? <Badge>最受欢迎</Badge> : null}
+                  {planName}
+                  {highlight ? <Badge>{t("plans.popular")}</Badge> : null}
                 </CardTitle>
-                <CardDescription>{plan.tagline}</CardDescription>
+                <CardDescription>{t(`plans.${plan.id}.tagline`)}</CardDescription>
                 <p className="pt-2 text-3xl font-black tracking-tight">
                   {price ? (
                     <>
                       ¥{price.monthly}
                       <span className="text-sm font-medium text-muted-foreground">
-                        /月
+                        {t("plans.perMonth")}
                       </span>
                     </>
                   ) : (
@@ -108,20 +113,23 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
                 </p>
                 {price && cycle === "year" ? (
                   <p className="text-xs text-amber-200/80">
-                    年付 ¥{price.billed}，相当于 {price.label}
+                    {t("plans.yearlyEquiv", {
+                      billed: price.billed,
+                      label: t("plans.yearlyLabel", { monthly: price.monthly }),
+                    })}
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    {paid ? "随时可改年付享 7 折" : "每月自动重置 80 积分"}
+                    {paid ? t("plans.switchYearHint") : t("plans.freeReset")}
                   </p>
                 )}
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
+                  {FEATURE_KEYS.map((key) => (
+                    <li key={key} className="flex items-start gap-2">
                       <CheckIcon className="mt-0.5 size-4 text-amber-300" />
-                      <span>{f}</span>
+                      <span>{t(`plans.${plan.id}.${key}`)}</span>
                     </li>
                   ))}
                 </ul>
@@ -133,7 +141,7 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
                     className="w-full"
                     onClick={() => router.push("/generate")}
                   >
-                    {current ? "当前方案" : "免费开始"}
+                    {current ? t("plans.current") : t("plans.startFree")}
                   </Button>
                 ) : (
                   <Button
@@ -142,7 +150,7 @@ export function PlanGrid({ teaser = false }: { teaser?: boolean }) {
                       router.push(`/checkout?plan=${plan.id}&cycle=${cycle}`)
                     }
                   >
-                    {current ? "管理 / 续费" : `开通${plan.name}`}
+                    {current ? t("plans.manage") : t("plans.subscribe", { plan: planName })}
                   </Button>
                 )}
               </CardFooter>

@@ -3,29 +3,28 @@
 import { CoverCanvas } from "@/components/generator/cover-canvas";
 import { Button } from "@/components/ui/button";
 import { INSPIRATIONS } from "@/lib/explore";
+import { msg } from "@/lib/app-error";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export function InspirationWall({
   limit,
-  heading = "灵感广场",
-  sub = "探索用闪封面做出的高点击封面，点「用同款」直接带入工作台",
 }: {
   limit?: number;
-  heading?: string;
-  sub?: string;
 }) {
   const items = limit ? INSPIRATIONS.slice(0, limit) : INSPIRATIONS;
+  const t = useTranslations();
 
   return (
     <section>
       <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-3xl font-black tracking-tight md:text-4xl">{heading}</h2>
-          <p className="mt-2 max-w-2xl text-muted-foreground">{sub}</p>
+          <h2 className="text-3xl font-black tracking-tight md:text-4xl">{t("explore.heading")}</h2>
+          <p className="mt-2 max-w-2xl text-muted-foreground">{t("explore.sub")}</p>
         </div>
         {limit ? (
           <Button variant="outline" nativeButton={false} render={<Link href="/explore" />}>
-            查看全部
+            {t("explore.viewAll")}
           </Button>
         ) : null}
       </div>
@@ -35,11 +34,18 @@ export function InspirationWall({
             key={item.id}
             className="mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-white/8 bg-white/3 p-2"
           >
-            <CoverCanvas asset={item} />
+            <CoverCanvas
+              asset={{
+                ...item,
+                title: msg(t as never, `inspirations.${item.id}.title`),
+                subtitle: msg(t as never, `inspirations.${item.id}.subtitle`),
+                badge: msg(t as never, `inspirations.${item.id}.badge`),
+              }}
+            />
             <div className="flex items-center justify-between gap-2 px-2 py-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.topic}</p>
-                <p className="text-xs text-muted-foreground">{item.author}</p>
+                <p className="truncate text-sm font-medium">{msg(t as never, `inspirations.${item.id}.topic`)}</p>
+                <p className="text-xs text-muted-foreground">{msg(t as never, `inspirations.${item.id}.author`)}</p>
               </div>
               <Button
                 size="sm"
@@ -47,11 +53,11 @@ export function InspirationWall({
                 nativeButton={false}
                 render={
                   <Link
-                    href={`/generate?style=${item.styleId}&platform=${item.platformId}&topic=${encodeURIComponent(item.topic)}`}
+                    href={`/generate?style=${item.styleId}&platform=${item.platformId}&topic=${encodeURIComponent(msg(t as never, `inspirations.${item.id}.topic`))}`}
                   />
                 }
               >
-                用同款
+                {t("explore.useSame")}
               </Button>
             </div>
           </article>

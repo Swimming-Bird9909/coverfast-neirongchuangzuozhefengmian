@@ -1,7 +1,10 @@
-export const metadata = {
-  title: "生成器",
-  description: "选择平台与风格，生成封面与配套标题并导出 PNG。",
-};
+import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("generate");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default function GenerateLayout({
   children,

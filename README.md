@@ -13,6 +13,8 @@ npm run dev
 
 默认开发端口为 **43127**。浏览器打开 [http://127.0.0.1:43127](http://127.0.0.1:43127)。
 
+页头地球图标可切换 31 种语言；首次访问按 IP 国家选择默认语言（失败则简体中文）。阿拉伯语、希伯来语、乌尔都语、波斯语为 RTL。语言选择保存在 cookie 与 localStorage。
+
 ```bash
 npm run build
 npm start
@@ -28,6 +30,8 @@ npm start
 | `/assets` | 本地作品库 |
 | `/pricing` | 免费 / 创作者 / 专业，年付 -30% |
 | `/about` | 产品说明 |
+| `/changelog` | 更新日志 |
+| `/login` | 本地模拟登录 / 注册 |
 | `/checkout` | 模拟支付，确认即写入会员与积分 |
 
 ## 积分
@@ -40,4 +44,4 @@ npm start
 
 ## 技术
 
-Next.js App Router、TypeScript、Tailwind CSS、shadcn/ui。封面导出使用 Canvas；`CoverProvider` 与 `PaymentPort` 预留给后续真实图像模型与支付渠道。
+Next.js App Router、TypeScript、Tailwind CSS、shadcn/ui、next-intl。封面导出使用 Canvas；`CoverProvider` 与 `PaymentPort` 预留给后续真实图像模型与支付渠道。

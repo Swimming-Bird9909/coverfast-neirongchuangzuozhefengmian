@@ -1,5 +1,6 @@
 "use client";
 
+import { LocaleSwitcher } from "@/components/site/locale-switcher";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,27 +18,29 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { PLANS } from "@/lib/billing/plans";
 import { signOut, useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { MenuIcon, SparklesIcon, ZapIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-
-const NAV = [
-  { href: "/generate", label: "生成器" },
-  { href: "/explore", label: "灵感广场" },
-  { href: "/assets", label: "我的作品" },
-  { href: "/pricing", label: "定价" },
-  { href: "/about", label: "关于" },
-];
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAppStore();
-  const plan = PLANS[user.plan];
   const loginHref = `/login?next=${encodeURIComponent(pathname || "/")}`;
+  const t = useTranslations();
+  const planName = t(`plans.${user.plan}.name`);
+  const emailLabel = user.email || t("common.localAccount");
+
+  const nav = [
+    { href: "/generate", label: t("nav.generate") },
+    { href: "/explore", label: t("nav.explore") },
+    { href: "/assets", label: t("nav.assets") },
+    { href: "/pricing", label: t("nav.pricing") },
+    { href: "/about", label: t("nav.about") },
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/8 bg-[#07080d]/80 backdrop-blur-xl">
@@ -47,15 +50,15 @@ export function SiteHeader() {
             <ZapIcon className="size-4" />
           </span>
           <span className="text-lg">
-            闪封面
-            <span className="ml-1 text-xs font-medium text-muted-foreground">
-              CoverFast
+            {t("brand.name")}
+            <span className="ms-1 text-xs font-medium text-muted-foreground">
+              {t("brand.product")}
             </span>
           </span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -75,8 +78,9 @@ export function SiteHeader() {
             className="hidden items-center gap-1 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200 sm:inline-flex"
           >
             <SparklesIcon className="size-3.5" />
-            {plan.name} · {user.credits} 积分
+            {t("header.planCredits", { plan: planName, credits: user.credits })}
           </Link>
+          <LocaleSwitcher />
           {user.signedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -89,22 +93,27 @@ export function SiteHeader() {
                   <DropdownMenuLabel>
                     {user.nickname}
                     <span className="mt-0.5 block font-normal text-muted-foreground">
-                      {user.email || "本地账号"} · {user.credits} 积分
+                      {t("header.accountCredits", {
+                        email: emailLabel,
+                        credits: user.credits,
+                      })}
                     </span>
                   </DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem onClick={() => router.push("/assets")}>
-                    我的作品
+                    {t("nav.assets")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/pricing")}>
-                    {plan.name}套餐
+                    {t("header.planSuffix", { plan: planName })}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => signOut()}>退出登录</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    {t("nav.signOut")}
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -115,7 +124,7 @@ export function SiteHeader() {
               nativeButton={false}
               render={<Link href={loginHref} />}
             >
-              登录
+              {t("nav.login")}
             </Button>
           )}
 
@@ -129,10 +138,10 @@ export function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="right" className="bg-[#0b0d14]">
               <SheetHeader>
-                <SheetTitle>闪封面</SheetTitle>
+                <SheetTitle>{t("brand.name")}</SheetTitle>
               </SheetHeader>
               <div className="mt-4 flex flex-col gap-1 px-2">
-                {NAV.map((item) => (
+                {nav.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
@@ -142,14 +151,18 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <Link href="/changelog" className="rounded-lg px-3 py-2 text-sm hover:bg-white/5">
-                  更新日志
+                  {t("nav.changelog")}
                 </Link>
                 <p className="mt-3 px-3 text-xs text-muted-foreground">
-                  {user.signedIn ? user.nickname : "未登录"} · {plan.name} · {user.credits} 积分
+                  {t("header.mobileStatus", {
+                    name: user.signedIn ? user.nickname : t("common.unsigned"),
+                    plan: planName,
+                    credits: user.credits,
+                  })}
                 </p>
                 {user.signedIn ? (
                   <Button variant="outline" className="mt-2" onClick={() => signOut()}>
-                    退出登录
+                    {t("nav.signOut")}
                   </Button>
                 ) : (
                   <Button
@@ -157,7 +170,7 @@ export function SiteHeader() {
                     nativeButton={false}
                     render={<Link href={loginHref} />}
                   >
-                    登录 / 注册
+                    {t("nav.loginRegister")}
                   </Button>
                 )}
               </div>

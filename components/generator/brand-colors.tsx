@@ -3,6 +3,7 @@
 import { PLANS } from "@/lib/billing/plans";
 import { setBrandColor, useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export const BRAND_PRESETS = [
@@ -23,6 +24,7 @@ export function BrandColorPicker({
 }) {
   const { user } = useAppStore();
   const unlocked = PLANS[user.plan].brandColors;
+  const t = useTranslations("brandColors");
 
   function pick(color: string) {
     if (!unlocked) return;
@@ -37,7 +39,7 @@ export function BrandColorPicker({
           <button
             key={color}
             type="button"
-            aria-label={`品牌色 ${color}`}
+            aria-label={t("aria", { color })}
             disabled={!unlocked}
             onClick={() => pick(color)}
             className={cn(
@@ -71,13 +73,13 @@ export function BrandColorPicker({
       <p className="mt-2 text-xs text-muted-foreground">
         {unlocked
           ? compact
-            ? "专业版品牌色会作用在角标、装饰条和平台标签"
-            : "专业版可将角标、装饰条换成品牌色，导出一并生效"
+            ? t("unlockedCompact")
+            : t("unlocked")
           : (
               <>
-                品牌色套装属于专业版。
-                <Link href="/pricing" className="ml-1 underline">
-                  去升级
+                {t("locked")}
+                <Link href="/pricing" className="ms-1 underline">
+                  {t("goUpgrade")}
                 </Link>
               </>
             )}

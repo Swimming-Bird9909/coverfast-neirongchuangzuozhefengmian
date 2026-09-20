@@ -2,6 +2,8 @@
 
 import { estimateCredits } from "@/lib/billing/credits";
 import { PLANS } from "@/lib/billing/plans";
+import { appError } from "@/lib/app-error";
+import { tRuntime } from "@/i18n/runtime";
 import { LocalTemplateProvider } from "@/lib/providers/local-template";
 import type {
   BillingCycle,
@@ -43,7 +45,7 @@ function defaultUser(): UserState {
   return {
     id: uid("user"),
     signedIn: false,
-    nickname: "创作者",
+    nickname: "Creator",
     email: null,
     credits: PLANS.free.credits,
     plan: "free",
@@ -181,7 +183,7 @@ export function needsWatermark(): boolean {
 }
 
 export function signIn(nickname: string, email?: string) {
-  const name = nickname.trim() || "创作者";
+  const name = nickname.trim() || tRuntime("common.creatorDefault");
   store = {
     ...store,
     user: {
@@ -214,15 +216,15 @@ export function registerAccount(input: {
   hydrate();
   const email = normalizeEmail(input.email);
   const password = input.password.trim();
-  const nickname = input.nickname.trim() || email.split("@")[0] || "创作者";
+  const nickname = input.nickname.trim() || email.split("@")[0] || tRuntime("common.creatorDefault");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error("请填写有效邮箱");
+    throw appError("authEmail");
   }
   if (password.length < 4) {
-    throw new Error("密码至少 4 位（仅保存在本机）");
+    throw appError("authPassword");
   }
   if (store.accounts.some((a) => a.email === email)) {
-    throw new Error("这个邮箱已经注册过，直接登录即可");
+    throw appError("authExists");
   }
   const account: LocalAccount = {
     email,
@@ -248,7 +250,7 @@ export function loginAccount(input: { email: string; password: string }) {
   const email = normalizeEmail(input.email);
   const account = store.accounts.find((a) => a.email === email);
   if (!account || account.password !== input.password.trim()) {
-    throw new Error("邮箱或密码不正确");
+    throw appError("authInvalid");
   }
   store = {
     ...store,
@@ -333,16 +335,16 @@ export async function generateCover(input: CoverGenerateInput): Promise<CoverAss
   const cost = estimateCredits({ quality: input.quality, batch: input.batch });
 
   if (!plan.styles.includes(input.styleId)) {
-    throw new Error("当前套餐未解锁该风格，请升级创作者或专业会员");
+    throw appError("styleLocked");
   }
   if (input.batch && !plan.batchExport && !plan.fullSizePack) {
-    throw new Error("四平台批量导出需要创作者或专业会员");
+    throw appError("batchLocked");
   }
   if (plan.concurrent !== "unlimited" && store.generating >= plan.concurrent) {
-    throw new Error("免费套餐同时只能生成 1 个任务，请等待当前任务完成");
+    throw appError("concurrent");
   }
   if (store.user.credits < cost) {
-    throw new Error(`积分不足，本次需要 ${cost} 积分。升级会员可立即到账额度`);
+    throw appError("credits", cost);
   }
 
   store = {
@@ -406,7 +408,7 @@ export function beginDownload(): { ok: true } | { ok: false; reason: string } {
   if (plan.downloadsPerDay != null && user.downloadsToday >= plan.downloadsPerDay) {
     return {
       ok: false,
-      reason: `今日免费下载已达 ${plan.downloadsPerDay} 次，升级会员可无限下载`,
+      reason: appError("downloadLimit", plan.downloadsPerDay).message,
     };
   }
   store = {

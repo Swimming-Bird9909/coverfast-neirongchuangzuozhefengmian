@@ -4,6 +4,7 @@ import { PLATFORMS } from "@/lib/templates/platforms";
 import { COVER_STYLES } from "@/lib/templates/styles";
 import type { CoverAsset } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface CoverCanvasProps {
   asset: Pick<
@@ -33,12 +34,14 @@ export function CoverCanvas({
   editable = false,
   onChange,
 }: CoverCanvasProps) {
+  const t = useTranslations();
   const platform = PLATFORMS[asset.platformId];
   const style = COVER_STYLES[asset.styleId];
   const accent = brandColor || style.accent;
   const landscape = platform.width / platform.height > 1.4;
   const isPoster = asset.styleId === "poster";
   const scale = asset.titleScale ?? 1;
+  const platformLabel = t(`platforms.${asset.platformId}.shortName`);
 
   const patternClass =
     style.pattern === "grid"
@@ -138,7 +141,7 @@ export function CoverCanvas({
               fontSize: landscape ? "0.62rem" : "clamp(0.55rem, 2.8cqw, 0.8rem)",
             }}
           >
-            {platform.shortName}
+            {platformLabel}
           </span>
         </div>
 
@@ -206,7 +209,7 @@ export function CoverCanvas({
       {watermark ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <span className="-rotate-[18deg] text-[clamp(1.1rem,8cqw,2rem)] font-black tracking-widest text-white/20">
-            闪封面 CoverFast
+            {t("brand.watermark")}
           </span>
         </div>
       ) : null}
@@ -222,7 +225,7 @@ export function CoverCanvas({
 
       {editable ? (
         <label className="absolute right-[6%] bottom-[4%] flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-[11px] text-white backdrop-blur-sm">
-          字号
+          {t("workbench.typeSize")}
           <input
             type="range"
             min={0.75}

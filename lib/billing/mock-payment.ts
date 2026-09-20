@@ -1,3 +1,4 @@
+import { appError } from "@/lib/app-error";
 import { amountFen } from "@/lib/billing/plans";
 import type { PaymentPort } from "@/lib/billing/payment-port";
 import { confirmCheckout, createCheckoutSession } from "@/lib/store";
@@ -14,7 +15,7 @@ export const MockPaymentPort: PaymentPort = {
   async confirm(sessionId) {
     const paid = confirmCheckout(sessionId);
     if (!paid) {
-      throw new Error("找不到待支付订单");
+      throw appError("payment");
     }
     return paid;
   },
