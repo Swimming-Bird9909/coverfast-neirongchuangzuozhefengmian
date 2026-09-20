@@ -160,7 +160,11 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string | null) =>
+                    value ? t(`platforms.${value}.shortName`) : null
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {PLATFORM_LIST.map((p) => (
@@ -185,7 +189,11 @@ export function Workbench({ asset }: { asset: CoverAsset }) {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string | null) =>
+                    value ? t(`styles.${value}.name`) : null
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {STYLE_LIST.map((s) => (

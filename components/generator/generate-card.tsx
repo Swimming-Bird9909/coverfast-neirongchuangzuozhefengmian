@@ -206,12 +206,16 @@ export function GenerateCard({
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(value: string | null) =>
+                  value ? platformSelectLabel(t, value) : null
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {PLATFORM_LIST.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {t(`platforms.${p.id}.shortName`)} · {p.ratio} · {p.width}×{p.height}
+                  {platformSelectLabel(t, p.id)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -226,13 +230,16 @@ export function GenerateCard({
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(value: string | null) =>
+                  value ? styleSelectLabel(t, value, true) : null
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {STYLE_LIST.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {t(`styles.${s.id}.name`)}
-                  {!canUseStyle(s.id) ? t("generate.styleMember") : ""}
+                  {styleSelectLabel(t, s.id, true)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -361,4 +368,27 @@ export function GenerateCard({
       ) : null}
     </div>
   );
+}
+
+function platformSelectLabel(
+  t: ReturnType<typeof useTranslations>,
+  id: string
+) {
+  const platform = PLATFORM_LIST.find((item) => item.id === id);
+  if (!platform) return id;
+  return `${t(`platforms.${platform.id}.shortName`)} · ${platform.ratio} · ${platform.width}×${platform.height}`;
+}
+
+function styleSelectLabel(
+  t: ReturnType<typeof useTranslations>,
+  id: string,
+  showMemberLock: boolean
+) {
+  const style = STYLE_LIST.find((item) => item.id === id);
+  if (!style) return id;
+  const name = t(`styles.${style.id}.name`);
+  if (showMemberLock && !canUseStyle(style.id)) {
+    return `${name}${t("generate.styleMember")}`;
+  }
+  return name;
 }
